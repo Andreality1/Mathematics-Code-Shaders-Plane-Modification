@@ -151,7 +151,10 @@ over the space, lets explain.
 <h1 style="font-size: 40px;" id =""><b> Triangle Rotation. </b></h1>
 
 
-<img src="Img/TriangleRectangleShader.png"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/TriangleAxisClockWise.gif"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/TrianglePointCounterClockWise.gif"  style="display: block; margin: 0 auto; width: 50%;">
+
+
 
 
 <div style = "font-size: 21px">
@@ -159,8 +162,31 @@ over the space, lets explain.
 
 $$\begin{aligned}
 &\text{First of all we need to identify two types of rotation:}\\
-&\mathbf{1. Rotation on its axis}\\
-&\mathbf{2. Rotation on a point}\\
+&\mathbf{1.\ Rotation\ on\ its\ axis}\\
+&\mathbf{2.\ Rotation\ on\ a\ point}\\
+\end{aligned}$$
+
+
+<pre><code class="language-hlsl">
+
+float2x2 rotationMatrix(float rotationAngle)
+{
+    float2x2 rot = float2x2(cos(rotationAngle), 
+                            -sin(rotationAngle), 
+                                                sin(rotationAngle),
+                                                cos(rotationAngle));
+
+    return rot;
+}
+
+</code></pre>
+
+</div>
+
+<div style = "font-size: 21px">
+
+$$\begin{aligned}
+&\mathbf{1.\ Rotation\ on\ its\ axis}\\
 \end{aligned}$$
 
 <pre><code class="language-hlsl">
@@ -168,583 +194,210 @@ $$\begin{aligned}
 fixed4 frag (PixelData i) : SV_Target
 {
 
+
 float2 uv =  i.uv ;
 
 float4 colorWhite = float4(1,1,1,1); // Color white.
 float4 colorBlack = float4(0,0,0,1); // Color Black.
 
-
 float2 coordinateScale = (uv * 2.0)  - 1.0;
+coordinateScale = coordinateScale/(float2(0.55555, 1.0));
 
 float2 size = float2(0.5 ,0.5);
-
 float2 screenSpace = coordinateScale;
+
+float2x2 matrixOut = rotationMatrix(_Time.y);
+screenSpace = mul(matrixOut, screenSpace);
 
 float disHypotenuse = dot(size, screenSpace ) - (size.x * size.y); 
 
-float sdf =  ( sign(disHypotenuse) < 0 && screenSpace.y > 0 && screenSpace.x > 0 ) ? 1.0 : 0.0 ;
+screenSpace = -screenSpace;
+
+float sdf = max(max(screenSpace.x, screenSpace.y), disHypotenuse);
+
+float shader = 1.0 - smoothstep(0.0, 0.01, sdf);
 
 float4 col = colorBlack;
 
-col = fixed4(sdf, sdf, sdf, 1.0);
-    
+col = fixed4(shader, shader, shader, 1.0);
+
+return col;
+
 }
 
-</code></pre>
 
-$$\begin{aligned}
-&\text{All the thinsg that we had done since are very clear, the steps that we must take into consideration ahead}\\
-&\text{are going to be the next ones, there are things that we had already define like always from the beginning of this }\\
-&\text{series.}\\
-\end{aligned}$$
+</code></pre>
 
 </div>
 
 <div style = "font-size: 21px">
 
+$$\begin{aligned}
+&\mathbf{2.\ Rotation\ on\ a\ point}\\
+\end{aligned}$$
+
+
 <pre><code class="language-hlsl">
 
+fixed4 frag (PixelData i) : SV_Target
+{
+
+
 float2 uv =  i.uv ;
+
 float4 colorWhite = float4(1,1,1,1); // Color white.
 float4 colorBlack = float4(0,0,0,1); // Color Black.
 
 float2 coordinateScale = (uv * 2.0)  - 1.0;
 
-</code></pre>
-    
-$$\begin{aligned}
-&\text{Everything till this points looks very straight forward, and all the information presented here is clear, so}\\
-&\text{lets continue by more steps that we could use to clarify to understand more concepts .}\\
-\end{aligned}$$
-
-</div>
-
-
-<div style = "font-size: 21px">
-
-<pre><code class="language-hlsl">
-
-float2 size = float2(0.5 ,0.5);
-    
-float2 screenSpace = coordinateScale;
-
-float disHypotenuse = dot(size, screenSpace ) - (size.x * size.y); 
-
-float sdf =  ( sign(disHypotenuse) < 0 && screenSpace .y > 0 && screenSpace.x > 0 ) ? 1.0 : 0.0 ;
-        
-</code></pre>
-    
-
-</div>
-
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{Lets explain the meaning of each single of this lines of code, and how they work combine to represent information.}\\
-&\text{The assignation of vales on the first two lines of code is really straight forward.}\\
-\end{aligned}$$
-                
-<pre><code class="language-hlsl">
-
 float2 size = float2(0.5 ,0.5);
 
-float2 screenSpace = coordinateScale;
-                
-</code></pre>
-                
-$$\begin{aligned}
-&\text{the things that we need to describe here is the formula for the line, that we could represent is the information }\\
-&\text{is discribe in this particular way, the representation of the dot product, a formula that we need to review throughfully }\\
-&\text{cuz its meaning could be reorganize multiple times along the theories many many many times. }\\
-\end{aligned}$$
+float2 position = float2(0.5, 0.5);
 
-</div>    
-                
+float2x2 matrixOut = rotationMatrix(_Time.y);
 
-<div style = "font-size: 21px">
-
-<pre><code class="language-hlsl">
+position = mul(matrixOut, position);
+float2 screenSpace = coordinateScale - position;
 
 float disHypotenuse = dot(size, screenSpace ) - (size.x * size.y); 
 
-</code></pre>
+screenSpace = -screenSpace;
 
-$$\begin{aligned}
-&\text{The idea that we need to represent is how to draw a right triangle, so once we had define what a right triangle is we can continue}\\
-&\text{reprenseting more values.}\\
-&\text{So whats is a right triangle, a right triangle is a triangle form with two vectors, that are perpendicular to each other, with another }\\
-&\text{vector connecting them, lets place this vectors in the origin for more clarity.}\\
-\end{aligned}$$
+float sdf = max(max(screenSpace.x, screenSpace.y), disHypotenuse);
 
-</div>    
-          
-<img src="Img/TriangleRectangleVectors.png"  style="display: block; margin: 0 auto; width: 50%;">
+float shader = 1.0 - smoothstep(0.0, 0.01, sdf);
 
+float4 col = colorBlack;
 
-<hr>
-<hr>
-<h1 style="font-size: 40px;"id ="LineSDF"><b> LineSDF </b></h1>
+col = fixed4(shader, shader, shader, 1.0);
 
-<br>
-<br>
+return col;
 
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{This looks like a triangle to me, so the idea that we need to clarify is how we could get the points inside this triangle, }\\
-&\text{ like literally all the points, how we are able to identify which points are going to be inside and outside of the triangle}\\
-&\text{To be able to do that is going to be necessary for us to identify the borders, why cuz if the point is within the borders}\\
-&\text{then we'll be able to comprehend which point lay or not in the section, or triangle.}\\
-&\text{reprenseting more values.}\\
-\end{aligned}$$
-
-<pre><code class="language-hlsl">
-
-float disHypotenuse = dot(size, screenSpace ) - (size.x * size.y); 
-
-</code></pre>
-
-$$\begin{aligned}
-&\text{so the first things that we need to identify is which points lay on each side of the hypothenuse, }\\
-&\text{to do this we need to ask, which are the vectors that make out the perpendiculars sides of the triangle}\\
-&\text{and how we position this vectors in the axis of the cartesian plane is the key factor here}\\
-&\text{}\\
-\end{aligned}$$
-
-$$\vec{v}_1 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$$
-$$\\[5ex]\\$$
-$$\vec{v}_2 = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$$
-$$\\[5ex]\\$$
-$$\vec{v}_{conn} = \vec{v}_1 - \vec{v}_2$$
-$$\\[5ex]\\$$
-$$\vec{v}_{conn} = \begin{bmatrix} 1 \\ 0 \end{bmatrix} - \begin{bmatrix} 0 \\ 1 \end{bmatrix} = \begin{bmatrix} 1 \\ -1 \end{bmatrix}$$
-
-
-$$\\[5ex]\\$$
-
-$$\begin{aligned}
-&\text{but if we plot this three vectors then we are going to get the next thing.}\\
-\end{aligned}$$
-</div>    
-        
-
-<img src="Img/TriangleRectangleAll.png"  style="display: block; margin: 0 auto; width: 50%;">
-
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{so the idea would be to identify what can we do with this information to make a representation of the ideas}\\
-&\text{that we want to make reality, which are the key ingredients that we need to set up in this field.}\\
-&\text{lets begin with the most difficult thing to define between the three, lets define the hipothenuse.}\\
-&\text{what we need to do with the hypothenusa, from the hypothenusa, what defines a hypothenusa? }\\
-&\text{very important questions about the hypothenusa }\\
-&\text{but overall from which place we can detail its existence.}\\
-\end{aligned}$$
-
-$$\text{RandomPoint =}\ \ (x, y)$$
-$$\text{PointInTheLine =}\ \ (x_1, y_1)$$
-
-$$\text{The slope of the line is define by} \ \ m$$ 
-$$m = \frac{y - y_1}{x - x_1}$$
-
-</div>    
-                
-<img src="Img/SlopeGraphFunction.png"  style="display: block; margin: 0 auto; width: 50%;">
+}
     
-<div style = "font-size: 21px">
-
-$$\\[5ex]$$
-
-$$y = mx + b$$
-
-$$\\[5ex]$$
-
-$$\begin{aligned}
-&\text{This is the conventional idea of a function, you get a value for each number of the real numbers}\\ 
-&\text{in this case the real numbers are represented by the cartesian plane x axis.}\\
-\end{aligned}$$
-
-$$\\[5ex]$$
-
-$$\begin{aligned}
-&\text{So what the values represent in this function?, the idea is to clarify what does each value do.}\\ 
-&\text{what does the values of the constants that made up this function do.}\\
-\end{aligned}$$
-
-$$\text{The slope of the line is define by} \ \ m$$ 
-
-$$\begin{aligned}
-&\text{So what is a slope, a slope is the reason of change, of the "x" values in the "y" values}\\ 
-&\text{the constant that made up this function.}\\
-\end{aligned}$$
+</code></pre>
 
 </div>
 
-<img src="Img/PlaneCartesianSlope.png"  style="display: block; margin: 0 auto; width: 50%;">
+
 
 
 <div style = "font-size: 21px">
 
-$$\begin{aligned}
-&\text{The idea with the m slope, is to make the "y" values be "m" times the "x"}\\ 
-&\text{which is the same idea as modify the space, of the real numbers to make it increment or}\\ 
-&\text{descrease its values, like an scalation of the values, but for all the values in the real numbers}\\ 
-\end{aligned}$$
-
 
 $$\begin{aligned}
-&\text{The second element that we need to define is the "b", which is the point where we want the}\\ 
-&\text{line to start, only in this particular representation of the line, it works like this, the }\\ 
-&\text{variable "b", represent from which positin of the input "x" we want the escalations to begin }\\ 
+
+&\textbf{1. Represent the Point in Polar Coordinates}\\
+&\text{Any point}\ (x, y) \text{can be described by its distance from the origin }(r)\\
+&\text{and its current angle } (\theta):\\
+&x = r \cos \theta \\
+&y = r \sin \theta\\
+
+&\\[-15pt]\\
+
+&\textbf{2. Apply the Rotation} \\
+&\text{Now, we rotate the point by an additional angle}\ \phi.\\
+&\text{The distance $r$ stays the same, but the new angle is} \ (\theta + \phi).\\ 
+&\text{The new coordinates } (x', y')\ \text{are}\ :\\
+&x' = r \cos(\theta + \phi)\\
+&y' = r \sin(\theta + \phi)\\
+
+&\\[-15pt]\\
+
+&\textbf{3. Use Trigonometric Identities }\\
+&\text{We apply the angle addition formulas:}\\
+&\cos(A + B) = \cos A \cos B - \sin A \sin B\\
+&\sin(A + B) = \sin A \cos B + \cos A \sin B\\
+&\text{Substituting these into our equations for } x' and \ y':\\
+&x' = r(\cos \theta \cos \phi - \sin \theta \sin \phi)\\
+&y' = r(\sin \theta \cos \phi + \cos \theta \sin \phi)\\
+
+&\\[-15pt]\\
+
+&\textbf{4. Final Substitution}\\
+&\text{By distributing }\ r \ \text{and substituting the original }\\
+&x = r \cos \theta \\
+&and \\
+&\ y = r \sin \theta \\
+&\text{ back into the equations, we get the standard rotation transformation:}\\
+&x' = x \cos \phi - y \sin \phi \\
+&y' = x \sin \phi + y \cos \phi \\
+
+&\\[-15pt]\\
+
+&\textbf{5. Form the Matrix}\\
+\\
+&\text{We can write these two linear equations as a single matrix multiplication:}\\
+&\begin{pmatrix} x' \\ y' \end{pmatrix} = \begin{pmatrix} \cos \phi & -\sin \phi \\ \sin \phi & \cos \phi \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix}\\
+\\
+&\text{This gives us the standard Rotation Matrix:}\\
+&R(\phi) = \begin{pmatrix} \cos \phi & -\sin \phi \\ \sin \phi & \cos \phi \end{pmatrix}\\
+\\
+&\text{But on HLSL and CG Programing the order of an array is Column Major:}\\
+&\mathbf{column\ Major\ }R(\phi) = \begin{pmatrix} \cos \phi & \sin \phi \\ -\sin \phi & \cos \phi \end{pmatrix}\\
+
 \end{aligned}$$
 
-
-$$\begin{aligned}
-&\text{one particularity of this representation of the line, is that if you want to get the values}\\ 
-&\text{of the line to cut always both of the axis, in the same point for both the "x" and the "y" axis }\\ 
-&\text{at the same time, the value of the m = 1}\\ 
-\end{aligned}$$
-
-$$\\[5ex]$$
-
-$$y = mx + b$$
-
-$$\\[5ex]$$
-
-$$m = 1$$
-
-$$\\[5ex]$$
-
-$$y = ( 1) x + b$$
-
-$$\\[5ex]$$
-
-$$if \ x = 0 \ \& \ b = 2$$
-
-$$\\[5ex]$$
-
-$$y = ( 1) (0) + 2$$
-
-$$\\[5ex]$$
-
-$$y = 2$$
-
-$$\text{cuts the line in the Y axis in }2$$
-
-$$\\[10ex]$$
-
-
-$$and\ if \ y = 2 \ \& \ b = 2$$
-
-$$\\[5ex]$$
-
-$$y = ( 1) x + 2$$
-
-$$\\[5ex]$$
-
-$$y - 2 = ( 1) x $$
-
-$$\\[5ex]$$
-
-$$y = 0$$
-
-$$\\[5ex]$$
-
-$$ 0 - 2 = ( 1) x $$
-
-$$\\[5ex]$$
-
-$$ x = - 2 $$
-
-$$\text{cuts the line in the X axis in }-2$$
-
-$$\\[5ex]$$
-
-
-
-</div>
-
-<img src="Img/SlopeEqualXandY.png"  style="display: block; margin: 0 auto; width: 50%;">
-
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{Something that you could also do, is get the specific points where you want the line to cut the axis}\\ 
-&\text{by following this formula.}\\ 
-&\text{}\\ 
-\end{aligned}$$
-
-$$y = \left( -\frac{u}{o} \right) x + u$$
-
-$$\\[5ex]$$
-
-$$\text{now if we want to find the } u \\ $$
-
-$$\\[5ex]$$
-
-$$y = m(0) + u$$
-
-$$\\[5ex]$$
-
-$$y = u$$
-
-$$\\[5ex]$$
-
-$$\text{now if we want to find the } o \\ $$
-
-$$\\[5ex]$$
-
-$$y = 0$$
-
-$$\\[5ex]$$
-
-$$x = o \xrightarrow{\text{point to find }} \ (o, 0)$$
-
-$$\\[5ex]$$
-
-$$0 = m(o) + u \\ \\$$
-
-$$\\[5ex]$$
-
-$$-u = mo \\ \\$$
-
-$$\\[5ex]$$
-
-$$m = -\frac{u}{o}$$
-
-$$\\[5ex]$$
-
-$$\text{and thats how we could make the next thing to be possible} \\ $$
-
-$$y = \left( -\frac{u}{o} \right) x + u$$
-
-$$\\[5ex]$$
-
-$$\text{In the next example:}$$
-
-$$o = 2 $$
-$$u = 3 $$
-
-</div>
-
-<img src="Img/Slope_SelectXandY.png"  style="display: block; margin: 0 auto; width: 50%;">
-
-<br>
-
-<br>
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{This would be the first form to represent the line, which is the most common, and a list-ingy}\\ 
-&\text{and single computer processor, to think about this way to express the line.}\\ 
-&\text{descrease its values, like an scalation of the values, for all the values in the real numbers}\\ 
-\end{aligned}$$
-        
-$$\begin{aligned}
-&\text{now there is a second way to make the representation of the line, and it would be by using  }\\ 
-&\text{VECTORS, a structured of thought that is a little bit more computational parallel multiple core,  }\\ 
-&\text{processors, rather than a expression more listy single processor thinking. }\\ 
-&\text{and the idea is based entirely on this expression}\\ 
-\end{aligned}$$
-
-$$\\[5ex]$$
-
-$$0 = \mathbf{n} \cdot \mathbf{p}$$
-
-$$\\[5ex]$$
-
-$$\begin{aligned}
-&\text{Yes, i am telling you that the equation of the line could be derived from the dot product.}\\ 
-&\text{and its pretty simple to imagine .}\\ 
-\end{aligned}$$
-
-$$\\[5ex]$$
-
-$$\mathbf{n}  = (a, \, b) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{p}  = (x, \, y) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} = (a \cdot x) + (b \cdot y)$$
 
 </div>
 
 <div style = "font-size: 21px">
 
-$$\\[5ex]$$
-
 $$\begin{aligned}
-&\text{So the main idea when you take the dot product is that it would return 3 type of things,}\\ 
-&\text{and its pretty simple to imagine .}\\ 
-\end{aligned}$$
 
+&\text{if you are noticing that the rotation of the shape happens in a clockwise notation. }\\
+&\text{but the points are rotating according to the formula are rotating in the counter-clock wise}\\
+&\text{direction}\\
+&\text{why ????????}\\\
 
-$$\begin{aligned}
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} = 0 \ \| \text{the angle between these two vectors is exactly 90 }\degree\\
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} > 0 \ \| \text{the angle between these two vectors is lesser than 90)\degree}\\
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} < 0 \ \| \text{the angle between these two vectors is greater than 90)\degree }\\
-\end{aligned}$$
-
-
-$$\begin{aligned}
-&\text{But also this representation, also contains a more deeper meaning, on regards of how the line is draw }\\ 
-&\text{for example on this same ideas we can identify this concepts like this.}\\ 
-\end{aligned}$$
-
-
-$$\begin{aligned}
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} = 0 \ \| \text{The coordinates (x,y) are part of the line }\\
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} > 0 \ \| \text{The coordinates (x,y) reflect on the n vector)}\\
-&\text{Points where \ } \mathbf{n} \cdot \mathbf{p} < 0 \ \| \text{The coordinates (x,y) do not reflect on the n vector)}\\
 \end{aligned}$$
 
 $$\begin{aligned}
-&\text{which are litterally the same thing, just visualize from an another angle, jaja jokes.}\\ 
-&\text{get it is like doing the explanation of the first things, but is not the first thing cuz it not on angles.}\\ 
+
+&\text{The reason why is because we are rotating the plane not the shape.}\\
+&\text{The idea happens to beside in the same explanation of the ScreenSpace and the ComputationSpace}\\
+&\text{if you rotate the points in the ComputationSpace are going to be presented in the}\\
+&\text{ScreenSpace differently.}\\
+&\text{}\\\
+
 \end{aligned}$$
 
 </div>
 
-<img src="Img/VectorAngleDotProduct.png"  style="display: block; margin: 0 auto; width: 50%;">
 
-<br>
 
-<img src="Img/PlaneSignedDistanceDotProduct.png"  style="display: block; margin: 0 auto; width: 50%;">
+
+<img src="Img/RotationPlane_1.png"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/RotationPlane_2.png"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/RotationPlane_3.png"  style="display: block; margin: 0 auto; width: 50%;">
 
 <div style = "font-size: 21px">
 
 $$\begin{aligned}
-&\text{Now one particularity that we could make here to happen, is the offset, but offset from what.}\\ 
-&\text{in this case, you know what would be really awesome, to make the line be moved to the position we }\\ 
-&\text{want it to be translated to, so the offset in this case would be the way we could make the line to be }\\ 
-&\text{translated to in the direction of the vector director}\\ 
-\end{aligned}$$
-        
-$$\\[3ex]$$
 
-$$\mathbf{n}  = (a, \, b) $$
+&\text{The idea is that every point is going to be modify in the computer space, but cuz this }\\
+&\text{points are also part of the screenspace is when you are going to notice that the }\\
+&\text{information is going to be represented in a completely different rotation, thanks to }\\
+&\text{this representation.}\\
 
-$$\\[3ex]$$
-
-$$\mathbf{p}  = (x, \, y) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} - \mathbf{offset} = (a \cdot x) + (b \cdot y) - OFFSET $$
-
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} - \mathbf{offset} = (a \cdot x) + (b \cdot y) - (\mathbf{|n|} * d) $$
-
-$$\\[3ex]$$
-
-$$OFFSET = \mathbf{distance\ from\ the\ origin} = \mathbf{|n|} \cdot d $$
-
-$$\\[3ex]$$
-
-$$OFFSET =  \mathbf{|n|} \cdot d $$
-
-$$\\[3ex]$$
-
-$$d = \text{literally the distance we want to set the line from the origin} $$
-
-$$\\[3ex]$$
-
-$$OFFSET > \mathbf{0} \longrightarrow \text{line move direction of the vector} $$
-
-$$\\[3ex]$$
-
-$$OFFSET < \mathbf{0} \longrightarrow \text{line move opposite the direction of the vector} $$
-
-</div>
-
-<br>
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{Now one property that is really interesting, is that if you multiply the values of the }\\ 
-&\text{magnitude of the vector director square }, \mathbf{||n||^2},\ \text{you are going to get the line position}\\ 
-&\text{directly over the point of the vector director. }\\ 
 \end{aligned}$$
 
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} - \mathbf{offset} = (a \cdot x) + (b \cdot y) - (\mathbf{|n|} * \mathbf{|n|}) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} - \mathbf{offset} = (a \cdot x) + (b \cdot y) - (\mathbf{|n|}^2) $$
-
-$$\\[3ex]$$
-
-
 </div>
-
-<br>
-
-<img src="Img/LineOffsetVectorDOT.png"  style="display: block; margin: 0 auto; width: 50%;">
-
-<br>
-
-<div style = "font-size: 21px">
-
-$$\begin{aligned}
-&\text{Another particularity of this property, is that if you want to get the line to cut particular points}\\ 
-&\text{of the axis, it'll be necessary to set the values of the vector director line like this. }\\ 
-\end{aligned}$$
-
-
-$$\\[3ex]$$
-
-$$\mathbf{n}  = (a, \, b) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{p}  = (x, \, y) $$
-
-$$\\[3ex]$$
-
-$$offset =  (a * b) $$
-
-$$\\[3ex]$$
-
-$$\mathbf{n} \cdot \mathbf{p} - \mathbf{offset} = (a \cdot x) + (b \cdot y) - (a * b) $$
-
-$$\\[3ex]$$
-
-$$\text{the,}\quad \mathbf{a}\quad  \text{would cut the |Y axis }  $$
-$$\text{the,}\quad \mathbf{b}\quad  \text{would cut the |X axis }  $$
-
-</div>
-
-<img src="Img/LineOffsetCUTAXIS.png"  style="display: block; margin: 0 auto; width: 50%;">
-        
+    
+    
 
 <hr>
 
-
-
-
-<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-PolyG/blob/main/Scripts/Shader_Triangle_LineEquation_1_SDF.shader">
-Shader_Triangle_LineEquation_1_SDF
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_RotationExplain_1.shader">
+Shader_RotationExplain_1
 </a>
 
 <br>
 
-<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-PolyG/blob/main/Scripts/Shader_Triangle_LineEquation_2_SDF.shader">
-Shader_Triangle_LineEquation_2_SDF 
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_RotationExplain_2.shader">
+Shader_RotationExplain_2
 </a>
-
-
+    
                                                                                                             
 
 
@@ -1107,6 +760,7 @@ float4 col = colorBlack;
 col = fixed4(shader, shader, shader, 1.0);
 
 return col;
+
 }
             
 
