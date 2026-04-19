@@ -414,6 +414,10 @@ Shader_RotationExplain_2
 <hr>
 <h1 style="font-size: 40px;"id ="Axis Lines"><b> Scalation </b></h1>
 
+
+<img src="Img/EscalationRepresentation.gif"  style="display: block; margin: 0 auto; width: 50%;">
+
+
  
 <div style = "font-size: 21px">
   
@@ -434,7 +438,7 @@ $$\begin{aligned}
 &\text{something else. }\\
 \end{aligned}$$
 
-<pre><code class="language-hlsl">
+<pre><code class="language' -hlsl">
  
 
 fixed4 frag (PixelData i) : SV_Target
@@ -453,6 +457,9 @@ fixed4 frag (PixelData i) : SV_Target
 
 </code></pre>
 
+</div>
+
+
 <div style = "font-size: 35px">
 <pre><code class="language-hlsl">
     
@@ -462,6 +469,8 @@ fixed4 frag (PixelData i) : SV_Target
 
 </code></pre>
 </div>    
+
+<div style = "font-size: 21px">
 
 <pre><code class="language-hlsl">
 
@@ -482,10 +491,7 @@ fixed4 frag (PixelData i) : SV_Target
 
 }    
 
-
 </code></pre>
-
-<!-- $$\\[5ex]$$ -->
 
 </div>
 
@@ -569,16 +575,170 @@ $$\begin{aligned}
 
 </div>
 
+    
 
-<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_Scalation_1.shader"></a>
 
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_Scalation_1.shader">
+Shader_Scalation_1
 </a>
 
 <br>
 
     
+<!--                                                                                           
+▄▄▄▄▄▄    ▄▄          ▄▄▄▄    ▄▄▄▄▄▄▄▄                                                   
+██▀▀▀▀█▄  ██         ██▀▀██   ▀▀▀██▀▀▀                                                   
+██    ██  ██        ██    ██     ██                                                      
+██████▀   ██        ██    ██     ██                                                      
+██        ██        ██    ██     ██                                                      
+██        ██▄▄▄▄▄▄   ██▄▄██      ██                                                      
+▀▀        ▀▀▀▀▀▀▀▀    ▀▀▀▀       ▀▀                                                      
+                                                                                         
+                                                                                         
+                                                                                         
+▄▄▄▄▄▄▄▄  ▄▄    ▄▄  ▄▄▄   ▄▄     ▄▄▄▄   ▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄     ▄▄▄▄    ▄▄▄   ▄▄    ▄▄▄▄   
+██▀▀▀▀▀▀  ██    ██  ███   ██   ██▀▀▀▀█  ▀▀▀██▀▀▀   ▀▀██▀▀    ██▀▀██   ███   ██  ▄█▀▀▀▀█  
+██        ██    ██  ██▀█  ██  ██▀          ██        ██     ██    ██  ██▀█  ██  ██▄      
+███████   ██    ██  ██ ██ ██  ██           ██        ██     ██    ██  ██ ██ ██   ▀████▄  
+██        ██    ██  ██  █▄██  ██▄          ██        ██     ██    ██  ██  █▄██       ▀██ 
+██        ▀██▄▄██▀  ██   ███   ██▄▄▄▄█     ██      ▄▄██▄▄    ██▄▄██   ██   ███  █▄▄▄▄▄█▀ 
+▀▀          ▀▀▀▀    ▀▀   ▀▀▀     ▀▀▀▀      ▀▀      ▀▀▀▀▀▀     ▀▀▀▀    ▀▀   ▀▀▀   ▀▀▀▀▀   
+                                                                                         
+-->
+
+<hr>
+<hr>
+<h1 style="font-size: 40px;"id ="Axis Lines"><b> Plot Functions </b></h1>
+
+
+<img src="Img/PlotSine.png"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/PlotCubic.png"  style="display: block; margin: 0 auto; width: 50%;">
+<img src="Img/PlotPhenomenom.png"  style="display: block; margin: 0 auto; width: 50%;">
+
+<div style = "font-size: 21px">
+
+$$\begin{aligned}
+&\text{Now one of the best things that we could do with shaders is the ability to plot polinomials}\\
+&\text{which is something really straight forward and very simple to think about.}\\
+&\text{the only thing that we need to do here is organize the ideas so we can think of it }\\
+&\text{as a relationship of distances, rather than a relationship of points.  }\\
+&\text{ }\\
+\end{aligned}$$
+
+
+<pre><code class="language-hlsl">
+
+fixed4 frag (PixelData i) : SV_Target
+{
+
+    float2 uv =  i.uv ;
+
+    float4 colorWhite = float4(1,1,1,1); // Color white.
+    float4 colorBlack = float4(0,0,0,1); // Color Black.
+
+    float2 coordinateScale = (uv * 2.0)  - 1.0;
+
+    float x = coordinateScale.x; 
+    float y = coordinateScale.y; 
+
+    // Define the function
+    float f_x = x; 
     
-   
+    // Check distance
+    float thickness = 0.1;
+    float sdf = smoothstep(thickness, 0.0, abs(y - f_x));
+
+
+    float4 col = colorBlack;
+
+    col =  fixed4(0, sdf, 0, 1); // Green line
+
+    return col;
+
+}   
+
+</code></pre>
+
+</div>
+
+<div style = "font-size: 21px">
+
+$$\begin{aligned}
+&\text{We only need to understand this lines of code }\\
+&\text{and is very simple to imagine what they do in here.}\\
+&\text{is just pure assignment of values }\\
+\end{aligned}$$
+
+<pre><code class="language-hlsl">
+    
+float x = coordinateScale.x;
+float y = coordinateScale.y;
+    
+// Define the function
+float f_x = x; 
+
+// Check distance
+float thickness = 0.1;
+float sdf = smoothstep(thickness, 0.0, abs(y - f_x));
+
+</code></pre>
+
+</div>
+
+
+<div style = "font-size: 21px">
+
+$$\begin{aligned}
+&\text{the only line that we need to really understand is this one. }\\
+\end{aligned}$$
+        
+<pre><code class="language-hlsl">
+
+float sdf = smoothstep(thickness, 0.0, abs(y - f_x));
+
+</code></pre>
+
+$$\begin{aligned}
+&\text{which could be explain like this, the evaluation of the function f\_x}\\
+&\text{and the value of this function is what we going to use to evaluate the distances}\\
+&\text{why?? and how ??? easy, the values of this function are the values of the Y values }\\
+&\text{in the plane, so the idea here is the value that we get here, from the function}\\
+&\text{f\_x, then to take the distance from it, we use the value of Y in the plane coordinates}\\
+&\text{and thats is how we are going to get the points that we need to color in order to }\\
+&\text{make the pixels that we need to plot correctly presented. }\\
+&\text{cuz if we got a distance that would mean that we could could add limits to which  }\\
+&\text{points we could color, depending on which specific ranges they are}\\
+\end{aligned}$$
+        
+
+$$f(x) = x$$
+
+$$\\[3ex]\\$$
+
+$$\text{distance} = |y - f(x)|$$
+
+$$\\[3ex]\\$$
+
+$$sdf \in [0, thickness] \implies pixel = colored $$
+</div>
+
+<hr>
+
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_PlotFunction_1.shader">
+Shader_PlotFunction_1
+</a>
+
+<br>
+
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_PlotFunction_2.shader">
+Shader_PlotFunction_2
+</a>
+
+<br>
+
+<a style="color: blue; font-size: 36px; font-weight: bold;" href="https://github.com/Andreality1/Mathematics-Code-Shaders-Plane-Modification/blob/main/Scripts/Shader_PlotFunction_3.shader">
+Shader_PlotFunction_3
+</a>
 
 
 <hr>
